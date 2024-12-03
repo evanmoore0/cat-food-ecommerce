@@ -1,0 +1,8 @@
+Fix 
+- images / add images to products
+- hydration bullshit
+- add products to checkout page
+- center product cards
+- add icons for trash (shopping cart), social media
+*** Double check api/route.tsx fetch funciton for products - does it need prisma.connect? (might be slowing it down)
+- Update the product hook to only fetch data if it hasn't already. 
