@@ -22,6 +22,8 @@ import {
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { CustomerOrders } from "@/components/core/CustomerOrders"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 type Product = {
   id: string
@@ -41,7 +43,7 @@ export default function DashboardPage() {
     image: '',
   })
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false) // Added state for edit dialog
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
 
   useEffect(() => {
     fetchProducts()
@@ -83,7 +85,7 @@ export default function DashboardPage() {
 
       setEditingProduct(null)
       fetchProducts()
-      setIsEditDialogOpen(false) // Close the dialog
+      setIsEditDialogOpen(false)
     } catch (error) {
       console.error('Error updating product:', error)
     }
@@ -136,166 +138,178 @@ export default function DashboardPage() {
 
   return (
     <div className="container mx-auto py-10">
-      <div className="flex justify-between items-center mb-5">
-        <h1 className="text-2xl font-bold">Product Dashboard</h1>
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={() => setIsAddDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" /> Add Product
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add New Product</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleAddProduct}>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="new-title" className="text-right">
-                    Title
-                  </Label>
-                  <Input
-                    id="new-title"
-                    value={newProduct.title}
-                    onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="new-description" className="text-right">
-                    Description
-                  </Label>
-                  <Textarea
-                    id="new-description"
-                    value={newProduct.description}
-                    onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="new-price" className="text-right">
-                    Price
-                  </Label>
-                  <Input
-                    id="new-price"
-                    type="number"
-                    value={newProduct.price}
-                    onChange={(e) => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) })}
-                    className="col-span-3"
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="new-image" className="text-right">
-                    Image URL
-                  </Label>
-                  <Input
-                    id="new-image"
-                    value={newProduct.image}
-                    onChange={(e) => setNewProduct({ ...newProduct, image: e.target.value || '/placeholder.svg' })}
-                    className="col-span-3"
-                    placeholder="Enter image URL or leave blank for placeholder"
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end">
-                <Button type="submit">Add Product</Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Title</TableHead>
-            <TableHead>Description</TableHead>
-            <TableHead>Price</TableHead>
-            <TableHead>Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {products.map((product) => (
-            <TableRow key={product.id}>
-              <TableCell>{product.title}</TableCell>
-              <TableCell>{product.description}</TableCell>
-              <TableCell>${product.price.toFixed(2)}</TableCell>
-              <TableCell>
-                <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}> {/* Updated dialog */}
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="icon" onClick={() => {
-                      handleEditProduct(product)
-                      setIsEditDialogOpen(true)
-                    }}>
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Edit Product</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleUpdateProduct}>
-                      <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="title" className="text-right">
-                            Title
-                          </Label>
-                          <Input
-                            id="title"
-                            value={editingProduct?.title || ''}
-                            onChange={(e) => setEditingProduct(prev => ({ ...prev!, title: e.target.value }))}
-                            className="col-span-3"
-                          />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="description" className="text-right">
-                            Description
-                          </Label>
-                          <Textarea
-                            id="description"
-                            value={editingProduct?.description || ''}
-                            onChange={(e) => setEditingProduct(prev => ({ ...prev!, description: e.target.value }))}
-                            className="col-span-3"
-                          />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="price" className="text-right">
-                            Price
-                          </Label>
-                          <Input
-                            id="price"
-                            type="number"
-                            value={editingProduct?.price || 0}
-                            onChange={(e) => setEditingProduct(prev => ({ ...prev!, price: parseFloat(e.target.value) }))}
-                            className="col-span-3"
-                          />
-                        </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="image" className="text-right">
-                            Image URL
-                          </Label>
-                          <Input
-                            id="image"
-                            value={editingProduct?.image || ''}
-                            onChange={(e) => setEditingProduct(prev => ({ ...prev!, image: e.target.value || '/placeholder.svg' }))}
-                            className="col-span-3"
-                            placeholder="Enter image URL or leave blank for placeholder"
-                          />
-                        </div>
-                      </div>
-                      <div className="flex justify-end">
-                        <Button type="submit">Save changes</Button>
-                      </div>
-                    </form>
-                  </DialogContent>
-                </Dialog>
-                <Button variant="outline" size="icon" className="ml-2" onClick={() => handleDeleteProduct(product.id)}>
-                  <Trash2 className="h-4 w-4" />
+      <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
+      <Tabs defaultValue="products" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="products">Products</TabsTrigger>
+          <TabsTrigger value="orders">Customer Orders</TabsTrigger>
+        </TabsList>
+        <TabsContent value="products">
+          <div className="flex justify-between items-center mb-5">
+            <h2 className="text-2xl font-bold">Product Management</h2>
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => setIsAddDialogOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" /> Add Product
                 </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Add New Product</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleAddProduct}>
+                  <div className="grid gap-4 py-4">
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="new-title" className="text-right">
+                        Title
+                      </Label>
+                      <Input
+                        id="new-title"
+                        value={newProduct.title}
+                        onChange={(e) => setNewProduct({ ...newProduct, title: e.target.value })}
+                        className="col-span-3"
+                      />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="new-description" className="text-right">
+                        Description
+                      </Label>
+                      <Textarea
+                        id="new-description"
+                        value={newProduct.description}
+                        onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                        className="col-span-3"
+                      />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="new-price" className="text-right">
+                        Price
+                      </Label>
+                      <Input
+                        id="new-price"
+                        type="number"
+                        value={newProduct.price}
+                        onChange={(e) => setNewProduct({ ...newProduct, price: parseFloat(e.target.value) })}
+                        className="col-span-3"
+                      />
+                    </div>
+                    <div className="grid grid-cols-4 items-center gap-4">
+                      <Label htmlFor="new-image" className="text-right">
+                        Image URL
+                      </Label>
+                      <Input
+                        id="new-image"
+                        value={newProduct.image}
+                        onChange={(e) => setNewProduct({ ...newProduct, image: e.target.value || '/placeholder.svg' })}
+                        className="col-span-3"
+                        placeholder="Enter image URL or leave blank for placeholder"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end">
+                    <Button type="submit">Add Product</Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Title</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {products.map((product) => (
+                <TableRow key={product.id}>
+                  <TableCell>{product.title}</TableCell>
+                  <TableCell>{product.description}</TableCell>
+                  <TableCell>${product.price.toFixed(2)}</TableCell>
+                  <TableCell>
+                    <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="icon" onClick={() => {
+                          handleEditProduct(product)
+                          setIsEditDialogOpen(true)
+                        }}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent>
+                        <DialogHeader>
+                          <DialogTitle>Edit Product</DialogTitle>
+                        </DialogHeader>
+                        <form onSubmit={handleUpdateProduct}>
+                          <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-4 items-center gap-4">
+                              <Label htmlFor="title" className="text-right">
+                                Title
+                              </Label>
+                              <Input
+                                id="title"
+                                value={editingProduct?.title || ''}
+                                onChange={(e) => setEditingProduct(prev => ({ ...prev!, title: e.target.value }))}
+                                className="col-span-3"
+                              />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                              <Label htmlFor="description" className="text-right">
+                                Description
+                              </Label>
+                              <Textarea
+                                id="description"
+                                value={editingProduct?.description || ''}
+                                onChange={(e) => setEditingProduct(prev => ({ ...prev!, description: e.target.value }))}
+                                className="col-span-3"
+                              />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                              <Label htmlFor="price" className="text-right">
+                                Price
+                              </Label>
+                              <Input
+                                id="price"
+                                type="number"
+                                value={editingProduct?.price || 0}
+                                onChange={(e) => setEditingProduct(prev => ({ ...prev!, price: parseFloat(e.target.value) }))}
+                                className="col-span-3"
+                              />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                              <Label htmlFor="image" className="text-right">
+                                Image URL
+                              </Label>
+                              <Input
+                                id="image"
+                                value={editingProduct?.image || ''}
+                                onChange={(e) => setEditingProduct(prev => ({ ...prev!, image: e.target.value || '/placeholder.svg' }))}
+                                className="col-span-3"
+                                placeholder="Enter image URL or leave blank for placeholder"
+                              />
+                            </div>
+                          </div>
+                          <div className="flex justify-end">
+                            <Button type="submit">Save changes</Button>
+                          </div>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
+                    <Button variant="outline" size="icon" className="ml-2" onClick={() => handleDeleteProduct(product.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TabsContent>
+        <TabsContent value="orders">
+          <CustomerOrders />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

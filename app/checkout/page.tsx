@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { MinusCircle, PlusCircle, Trash2 } from 'lucide-react'
+import Image from 'next/image'
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -25,13 +26,21 @@ import {
 } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { useCartStore } from '@/lib/store/useCartStore'
-import { getStripe } from '@/lib/stripe'
+import getStripe from '@/lib/stripe'
 import { useToast } from "@/hooks/use-toast"
 
 export default function CheckoutPage() {
   const { items, updateQuantity, removeItem, clearCart } = useCartStore()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
+  const [email, setEmail] = useState("")
+  const [shippingAddress, setShippingAddress] = useState({
+    firstName: "",
+    lastName: "",
+    address: "",
+    city: "",
+    zipCode: "",
+  })
   const { toast } = useToast()
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
@@ -42,34 +51,55 @@ export default function CheckoutPage() {
     event.preventDefault()
     setIsLoading(true)
 
+    if (!email) {
+      toast({
+        title: "Email Required",
+        description: "Please enter your email address",
+        variant: "destructive",
+      })
+      setIsLoading(false)
+      return
+    }
+
+    // Validate shipping address
+    if (Object.values(shippingAddress).some(field => field === "")) {
+      toast({
+        title: "Shipping Address Required",
+        description: "Please fill in all shipping address fields",
+        variant: "destructive",
+      })
+      setIsLoading(false)
+      return
+    }
+
     try {
       const response = await fetch('/api/create-checkout-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ items }),
+        body: JSON.stringify({ 
+          items, 
+          customerEmail: email,
+          shippingAddress: `${shippingAddress.firstName} ${shippingAddress.lastName}, ${shippingAddress.address}, ${shippingAddress.city}, ${shippingAddress.zipCode}`
+        }),
       });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const { sessionId, error } = await response.json();
-
-      if (error) {
-        throw new Error(error);
-      }
+      const { sessionId } = await response.json();
 
       const stripe = await getStripe();
       if (!stripe) {
         throw new Error('Failed to load Stripe');
       }
 
-      const { error: stripeError } = await stripe.redirectToCheckout({ sessionId });
+      const { error } = await stripe.redirectToCheckout({ sessionId });
 
-      if (stripeError) {
-        throw new Error(stripeError.message);
+      if (error) {
+        throw new Error(error.message);
       }
     } catch (error) {
       console.error('Error creating checkout session:', error);
@@ -115,7 +145,19 @@ export default function CheckoutPage() {
                 <TableBody>
                   {items.map((item) => (
                     <TableRow key={item.id}>
-                      <TableCell>{item.title}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-3">
+                          <div className="relative h-16 w-16 overflow-hidden rounded">
+                            <Image
+                              src={item.image || "/placeholder.svg"}
+                              alt={item.title}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                          <span>{item.title}</span>
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
                           <Button
@@ -174,31 +216,73 @@ export default function CheckoutPage() {
           <form onSubmit={handleCheckout} className="mt-6 space-y-4">
             <Card>
               <CardHeader>
+                <CardTitle>Contact Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email</Label>
+                  <Input 
+                    id="email" 
+                    type="email" 
+                    required 
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader>
                 <CardTitle>Shipping Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="firstName">First Name</Label>
-                    <Input id="firstName" required />
+                    <Input 
+                      id="firstName" 
+                      required 
+                      value={shippingAddress.firstName}
+                      onChange={(e) => setShippingAddress({...shippingAddress, firstName: e.target.value})}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="lastName">Last Name</Label>
-                    <Input id="lastName" required />
+                    <Input 
+                      id="lastName" 
+                      required 
+                      value={shippingAddress.lastName}
+                      onChange={(e) => setShippingAddress({...shippingAddress, lastName: e.target.value})}
+                    />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="address">Address</Label>
-                  <Input id="address" required />
+                  <Input 
+                    id="address" 
+                    required 
+                    value={shippingAddress.address}
+                    onChange={(e) => setShippingAddress({...shippingAddress, address: e.target.value})}
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="city">City</Label>
-                    <Input id="city" required />
+                    <Input 
+                      id="city" 
+                      required 
+                      value={shippingAddress.city}
+                      onChange={(e) => setShippingAddress({...shippingAddress, city: e.target.value})}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="zipCode">ZIP Code</Label>
-                    <Input id="zipCode" required />
+                    <Input 
+                      id="zipCode" 
+                      required 
+                      value={shippingAddress.zipCode}
+                      onChange={(e) => setShippingAddress({...shippingAddress, zipCode: e.target.value})}
+                    />
                   </div>
                 </div>
               </CardContent>
