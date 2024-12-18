@@ -20,6 +20,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts"
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 
 interface Order {
   id: string
@@ -70,9 +73,101 @@ export function CustomerOrders() {
     return <div>Error: {error}</div>
   }
 
+  // Prepare data for the orders by date chart
+  const ordersByDate = orders.reduce((acc, order) => {
+    const date = new Date(order.createdAt).toLocaleDateString()
+    acc[date] = (acc[date] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+
+  const ordersByDateData = Object.entries(ordersByDate).map(([date, count]) => ({
+    date,
+    orders: count
+  }))
+
+  // Prepare data for the order status chart
+  const orderStatus = orders.reduce((acc, order) => {
+    acc[order.status] = (acc[order.status] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+
+  const orderStatusData = Object.entries(orderStatus).map(([status, count]) => ({
+    status,
+    count
+  }))
+
+  const dateChartConfig = {
+    orders: {
+      label: "Orders",
+      color: "hsl(var(--chart-1))",
+    },
+  }
+
+  const statusChartConfig = {
+    count: {
+      label: "Orders",
+      color: "hsl(var(--chart-2))",
+    },
+  }
+
   return (
-    <div>
+    <div className="space-y-8">
       <h2 className="text-2xl font-bold mb-4">Customer Orders</h2>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Orders by Date</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={dateChartConfig} className="h-[300px]">
+              <BarChart data={ordersByDateData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="date" />
+                <YAxis 
+                  tickFormatter={(value) => Math.floor(value).toString()}
+                  allowDecimals={false}
+                />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar 
+                  dataKey="orders" 
+                  fill="var(--color-orders)" 
+                  radius={4}
+                  barSize={30}
+                  yAxisId={0}
+                />
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Order Status Distribution</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={statusChartConfig} className="h-[300px]">
+              <BarChart data={orderStatusData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="status" />
+                <YAxis 
+                  tickFormatter={(value) => Math.floor(value).toString()}
+                  allowDecimals={false}
+                />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar 
+                  dataKey="count" 
+                  fill="var(--color-count)" 
+                  radius={4}
+                  barSize={30}
+                  yAxisId={0}
+                />
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+      </div>
+
       <Table>
         <TableCaption>A list of recent customer orders.</TableCaption>
         <TableHeader>
